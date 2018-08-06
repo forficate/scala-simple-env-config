@@ -1,0 +1,8 @@
+.idea
+*.iws
+*.iml
+target/
+custom-plugins/
+plugins/
+*.DS_Store
+**/.ensime*
