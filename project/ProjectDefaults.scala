@@ -1,80 +1,94 @@
-import sbt._
-import sbt.Keys._
-
 import Dependencies._
-
-import com.typesafe.sbt.SbtScalariform
-import com.typesafe.sbt.SbtScalariform.ScalariformKeys
+import sbt._, Keys._
+import com.typesafe.sbt.SbtScalariform, SbtScalariform.autoImport._
+import org.scalastyle.sbt.ScalastylePlugin, ScalastylePlugin.autoImport._
 import scalariform.formatter.preferences._
 import wartremover._
 
-object ProjectDefaults {
-  private val scalacOptionsWarnings = Set(
-    // "-Xfatal-warnings",
-    "-Xlint",
-    "-Yno-adapted-args",
-    "-Yrangepos",
-    "-Ywarn-dead-code",
-    "-Ywarn-numeric-widen",
-    // "-Ywarn-unused-import",
-    "-Ywarn-value-discard"
-  )
+object ProjectDefaults extends AutoPlugin {
+  // Set plugin to auto load
+  override def trigger = allRequirements
 
- lazy val compileScalastyle = taskKey[Unit]("compileScalastyle")
+  lazy val compileScalastyle = taskKey[Unit]("compileScalastyle")
 
-  val settings =
-    SbtScalariform.globalSettings ++
+  override lazy val projectSettings = {
+    val scalacWarnings =
+      "-deprecation" ::
+        "-feature" ::
+        "-unchecked" ::
+        "-Ywarn-dead-code" ::
+        "-Ywarn-inaccessible" ::
+        "-Ywarn-infer-any" ::
+        "-Ywarn-nullary-override" ::
+        "-Ywarn-nullary-unit" ::
+        "-Ywarn-numeric-widen" ::
+        "-Ywarn-value-discard" ::
+        "-Xfatal-warnings" ::
+        "-Xlint:_,-type-parameter-shadow" ::
+        Nil
+
     Seq(
-      scalaVersion := Dependencies.scalaVersionNumber,
-      scalacOptions ++= Seq(
-        "-deprecation",
+      scalacOptions := Seq(
         "-encoding", "UTF-8",
-        "-feature",
-        "-language:existentials",
-        "-language:higherKinds",
-        "-language:implicitConversions",
-        "-unchecked",
+        "-explaintypes",
+        "-Yrangepos",
         "-Xfuture",
+        "-Ypartial-unification",
+        "-language:higherKinds",
+        "-language:existentials",
+        "-Yno-adapted-args",
+        "-Xsource:2.13",
         "-target:jvm-1.8"
-      ) ++
-      scalacOptionsWarnings,
+      ) ++ scalacWarnings,
 
-    // Disable warnings in console
-    scalacOptions in (Compile, console) ~= { _ filterNot scalacOptionsWarnings.apply },
-    scalacOptions in (Test, console)    ~= { _ filterNot scalacOptionsWarnings.apply },
+      scalaVersion := Dependencies.scalaVersionNumber,
 
-    resolvers ++= Seq(
-      Resolver.mavenLocal,
-      Resolver.typesafeRepo("releases")
-    ),
+      // Disable warnings in the console as it becomes unusable
+      scalacOptions in (Compile, console) ~= { _ filterNot scalacWarnings.contains },
+      scalacOptions in (Test, console)    ~= { _ filterNot scalacWarnings.contains },
 
-    //Stops the auto creation of java / scala-2.* directories
-    unmanagedSourceDirectories in Compile ~= { _.filter(_.exists) },
-    unmanagedSourceDirectories in Test ~= { _.filter(_.exists) },
+      updateOptions := updateOptions.value.withCachedResolution(true),
 
-    // Auto run scalastyle on compile
-    compileScalastyle := org.scalastyle.sbt.ScalastylePlugin.autoImport.scalastyle.in(Compile).toTask(" q").value, // " q" is the quiet flag
-    (compile in Compile) := ((compile in Compile) dependsOn compileScalastyle ).value,
-    org.scalastyle.sbt.ScalastylePlugin.autoImport.scalastyleConfig := file("project/scalastyle-config.xml"), // Needed as intelij looks here
+      resolvers ++= Seq(
+        Resolver.mavenLocal,
+        Resolver.typesafeRepo("releases")
+      ),
 
-    addCompilerPlugin("org.spire-math"  % "kind-projector"  % "0.9.7" cross CrossVersion.binary),
+      // Prevent java / scala-2.12 directories being created
+      Compile / unmanagedSourceDirectories ~= { _.filter(_.exists) },
 
-    ScalariformKeys.preferences := ScalariformKeys.preferences.value
-      .setPreference(AlignArguments,                    true)
-      .setPreference(AlignParameters,                   false)
-      .setPreference(AlignSingleLineCaseStatements,     true)
-      .setPreference(CompactControlReadability,         true)
-      .setPreference(CompactStringConcatenation,        false)
-      .setPreference(DanglingCloseParenthesis,          Force)
-      .setPreference(DoubleIndentConstructorArguments,  false)
-      .setPreference(NewlineAtEndOfFile,                true)
-      .setPreference(PreserveSpaceBeforeArguments,      true)
-      .setPreference(RewriteArrowSymbols,               false)
-      .setPreference(SpaceInsideParentheses,            false)
-      .setPreference(SpacesAroundMultiImports,          true),
+      addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.7"),
 
-    wartremoverErrors in (Compile, compile) := Warts.all,
-    wartremoverErrors in (Test, compile) := Warts.all
-  )
+      // Scalastyle configuration in a place compatible with IntelliJ
+      scalastyleConfig := file("project/scalastyle-config.xml"),
+
+      // Auto run scalastyle on compile, " q" is the quiet flag
+      compileScalastyle := scalastyle.in(Compile).toTask(" q").value,
+
+      // Auto code formatting
+      scalariformAutoformat := true,
+      scalariformPreferences := SbtScalariform.defaultPreferences
+        .setPreference(AlignArguments,                    true)
+        .setPreference(AlignParameters,                   false)
+        .setPreference(AlignSingleLineCaseStatements,     true)
+        .setPreference(CompactControlReadability,         true)
+        .setPreference(CompactStringConcatenation,        false)
+        .setPreference(DanglingCloseParenthesis,          Force)
+        .setPreference(DoubleIndentConstructorArguments,  false)
+        .setPreference(NewlineAtEndOfFile,                true)
+        .setPreference(PreserveSpaceBeforeArguments,      true)
+        .setPreference(RewriteArrowSymbols,               false)
+        .setPreference(SpaceInsideParentheses,            false)
+        .setPreference(SpacesAroundMultiImports,          true),
+
+      // Default test library for every project
+      libraryDependencies ++= Seq(specs2Core, specs2Matchers, specs2ScalaCheck).map(_ % "test"),
+
+      wartremoverErrors := Warts.all
+    )
+  }
+
+
+
 
 }

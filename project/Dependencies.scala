@@ -2,7 +2,7 @@ import sbt._
 
 object Dependencies {
   private object Version {
-    val scalaz           = "7.2.15"
+    val scalaz           = "7.2.25"
     val shapeless        = "2.3.2"
     val specs2           = "4.0.0"
   }
@@ -14,7 +14,6 @@ object Dependencies {
   val scalazCore               = "org.scalaz"               %% "scalaz-core"               % Version.scalaz
   val scalazEffect             = "org.scalaz"               %% "scalaz-effect"             % Version.scalaz
   val scalazScalacheckBinding  = "org.scalaz"               %% "scalaz-scalacheck-binding" % Version.scalaz
-  val shapeless                = "com.chuusai"              %% "shapeless"                 % Version.shapeless
   val specs2Core               = "org.specs2"               %% "specs2-core"               % Version.specs2
   val specs2Matchers           = "org.specs2"               %% "specs2-matcher-extra"      % Version.specs2
   val specs2ScalaCheck         = "org.specs2"               %% "specs2-scalacheck"         % Version.specs2

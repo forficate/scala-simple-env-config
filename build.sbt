@@ -6,7 +6,6 @@ scalaVersion := Dependencies.scalaVersionNumber
 
 lazy val core =
   (project in file("core"))
-    .settings(ProjectDefaults.settings)
     .settings(
       libraryDependencies ++= Seq(
         scalaReflect,
@@ -16,5 +15,4 @@ lazy val core =
 
 lazy val taggedTypeSupport =
   (project in file("tagged-type-support"))
-    .settings(ProjectDefaults.settings)
     .dependsOn(core)
