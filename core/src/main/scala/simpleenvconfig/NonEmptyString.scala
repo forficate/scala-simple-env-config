@@ -5,7 +5,7 @@ import scala.reflect.macros.blackbox.Context
 import scalaz.{ Equal, Maybe, Semigroup }
 
 final case class NonEmptyString private (val value: String) {
-  def filter(predicate: Char => Boolean): Maybe[NonEmptyString] =
+  def filter(predicate: Char ⇒ Boolean): Maybe[NonEmptyString] =
     NonEmptyString(value.filter(predicate))
 
   def +(other: String): NonEmptyString =
@@ -31,9 +31,9 @@ object NonEmptyString extends NonEmptyStringInstances {
       import c.universe._ // scalastyle:ignore
 
       c.prefix.tree match {
-        case Apply(_, List(Apply(_, List(t @ Literal(Constant(const: String)))))) =>
+        case Apply(_, List(Apply(_, List(t @ Literal(Constant(const: String)))))) ⇒
           NonEmptyString(const).cata(
-            _ => c.Expr[NonEmptyString](q"""_root_.simpleenvconfig.NonEmptyString.unsafeCoerce($const)"""),
+            _ ⇒ c.Expr[NonEmptyString](q"""_root_.simpleenvconfig.NonEmptyString.unsafeCoerce($const)"""),
             c.abort(t.pos, "Empty string given to nonEmpty, required non empty string.")
           )
       }
@@ -58,7 +58,7 @@ trait NonEmptyStringInstances {
 
   implicit val SemigroupNonEmptyString: Semigroup[NonEmptyString] =
     new Semigroup[NonEmptyString] {
-      override def append(a: NonEmptyString, b: => NonEmptyString): NonEmptyString =
+      override def append(a: NonEmptyString, b: ⇒ NonEmptyString): NonEmptyString =
         a ++ b
     }
 }

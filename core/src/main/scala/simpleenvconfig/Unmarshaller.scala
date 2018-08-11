@@ -11,19 +11,19 @@ import scalaz.syntax.id._
 import scalaz.syntax.maybe._
 
 // Typeclass for safe typed environment variable parsing
-final case class Unmarshaller[A](run: Maybe[String] => Unmarshaller.Error \/ A) {
+final case class Unmarshaller[A](run: Maybe[String] ⇒ Unmarshaller.Error \/ A) {
   def read(s: Maybe[String]): Unmarshaller.Error \/ A =
     run(s)
 
-  def map[B](f: A => B): Unmarshaller[B] =
+  def map[B](f: A ⇒ B): Unmarshaller[B] =
     Unmarshaller { run(_).map(f) }
 
-  def mapError[B](f: A => Unmarshaller.Error \/ B): Unmarshaller[B] =
+  def mapError[B](f: A ⇒ Unmarshaller.Error \/ B): Unmarshaller[B] =
     Unmarshaller { run(_).flatMap(f) }
 
-  def flatMap[B](f: A => Unmarshaller[B]): Unmarshaller[B] =
+  def flatMap[B](f: A ⇒ Unmarshaller[B]): Unmarshaller[B] =
     Unmarshaller {
-      str => run(str).flatMap { f(_).run(str) }
+      str ⇒ run(str).flatMap { f(_).run(str) }
     }
 
   def recover(err: PartialFunction[Unmarshaller.Error, A]): Unmarshaller[A] =
@@ -49,63 +49,63 @@ trait UnmarshallerInstances {
     Unmarshaller { _ \/> Error.MissingEnvValue }
 
   implicit val nonEmptyStringValueUnmarshaller: Unmarshaller[NonEmptyString] =
-    Unmarshaller { a =>
+    Unmarshaller { a ⇒
       Read[NonEmptyString].read(a.getOrElse("")) \/> Error.MissingEnvValue
     }
 
   implicit val boolValueUnmarshaller: Unmarshaller[Boolean] =
     Unmarshaller[NonEmptyString].mapError {
-      value => Read[Boolean].read(value.value) \/> Error.InvalidEnvValue(value.value, "boolean")
+      value ⇒ Read[Boolean].read(value.value) \/> Error.InvalidEnvValue(value.value, "boolean")
     }
 
   implicit val intValueUnmarshaller: Unmarshaller[Int] =
     Unmarshaller[NonEmptyString].mapError {
-      value => Read[Int].read(value.value) \/> Error.InvalidEnvValue(value.value, "integer")
+      value ⇒ Read[Int].read(value.value) \/> Error.InvalidEnvValue(value.value, "integer")
     }
 
   implicit val longValueUnmarshaller: Unmarshaller[Long] =
     Unmarshaller[NonEmptyString].mapError {
-      value => Read[Long].read(value.value) \/> Error.InvalidEnvValue(value.value, "long")
+      value ⇒ Read[Long].read(value.value) \/> Error.InvalidEnvValue(value.value, "long")
     }
 
   implicit val uriValueUnmarshaller: Unmarshaller[URI] =
     Unmarshaller[NonEmptyString].mapError {
-      value => Read[URI].read(value.value) \/> Error.InvalidEnvValue(value.value, "uri")
+      value ⇒ Read[URI].read(value.value) \/> Error.InvalidEnvValue(value.value, "uri")
     }
 
   implicit def maybeValueUnmarshaller[A: Unmarshaller]: Unmarshaller[Maybe[A]] =
     Unmarshaller {
       Unmarshaller[A].read(_) match {
-        case -\/(Error.MissingEnvValue) => \/.right[Unmarshaller.Error, Maybe[A]](Maybe.empty)
-        case other                      => other.map(Maybe.just)
+        case -\/(Error.MissingEnvValue) ⇒ \/.right[Unmarshaller.Error, Maybe[A]](Maybe.empty)
+        case other                      ⇒ other.map(Maybe.just)
       }
     }
 
   implicit def nonEmptyListValueUnmarshaller[A: Unmarshaller]: Unmarshaller[NonEmptyList[A]] =
-    Unmarshaller { value =>
+    Unmarshaller { value ⇒
       val list = value.getOrElse("").split(",").map(_.trim).filter(_.nonEmpty).toList
 
       list match {
-        case x :: xs =>
+        case x :: xs ⇒
           NonEmptyList(x, xs: _*).traverse1[Unmarshaller.Error \/ ?, A](_.just |> Unmarshaller[A].read)
-        case Nil =>
+        case Nil ⇒
           Unmarshaller.Error.InvalidEnvValue(value.getOrElse("EMPTY_VALUE"), "nonemptylist").left[NonEmptyList[A]]
       }
     }
 
   implicit def listValueUnmarshaller[A: Unmarshaller]: Unmarshaller[List[A]] =
-    Unmarshaller { value =>
+    Unmarshaller { value ⇒
       @tailrec
       def loop(items: List[String], accum: List[A]): Unmarshaller.Error \/ List[A] =
         items match {
-          case x :: xs =>
+          case x :: xs ⇒
             Unmarshaller[A].read(x.just) match {
-              case \/-(a) =>
+              case \/-(a) ⇒
                 loop(xs, a +: accum)
-              case -\/(_) =>
+              case -\/(_) ⇒
                 Unmarshaller.Error.InvalidEnvValue(value.getOrElse("EMPTY_VALUE"), "list").left[List[A]]
             }
-          case Nil =>
+          case Nil ⇒
             accum.right[Unmarshaller.Error]
         }
 

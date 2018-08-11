@@ -8,7 +8,8 @@ lazy val core =
       name := "simpleenvconfig-core",
       libraryDependencies ++= Seq(
         scalaReflect,
-        scalazCore
+        scalazCore,
+        specs2Scalaz % "test"
       )
     )
 

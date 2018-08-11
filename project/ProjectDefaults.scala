@@ -77,7 +77,7 @@ object ProjectDefaults extends AutoPlugin {
         .setPreference(DoubleIndentConstructorArguments,  false)
         .setPreference(NewlineAtEndOfFile,                true)
         .setPreference(PreserveSpaceBeforeArguments,      true)
-        .setPreference(RewriteArrowSymbols,               false)
+        .setPreference(RewriteArrowSymbols,               true)
         .setPreference(SpaceInsideParentheses,            false)
         .setPreference(SpacesAroundMultiImports,          true),
 
