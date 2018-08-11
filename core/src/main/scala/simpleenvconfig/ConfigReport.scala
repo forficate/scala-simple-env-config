@@ -26,7 +26,7 @@ final case class ConfigReport(readValues: Map[String, String]) {
       item match {
         case (key, value) :: xs ⇒
           sb.append("  - ").append(key).append(": ")
-          if (maskPredicate(value)) sb.append("******") else sb.append(value)
+          if (maskPredicate(key)) sb.append("******") else sb.append(value)
           if (xs.nonEmpty) sb.append(System.lineSeparator)
           loop(xs)
         case Nil ⇒
