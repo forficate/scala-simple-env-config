@@ -1,7 +1,7 @@
 # Simple-env-config
 Simple-env-config is a small, lightweight strongly typed configuration library for Scala biased towards Docker microservices that use environment variables for configuration following [Twelve-Factor App](https://12factor.net/) principals.
 
-While Simple-env-config is designed around system envrironment variables it is compatible with input source where you can generate a `Map[String, String]`.
+While Simple-env-config is designed around system envrironment variables it is compatible with any input source where you can generate a `Map[String, String]`.
 
 ## Why use Simple-env-config
 Other Scala configuration libraries promote some bad practices:

@@ -1,7 +1,5 @@
 package simpleenvconfig
 
-import scala.annotation.tailrec
-
 import scalaz.{ \/, Applicative, NonEmptyList, Reader, State, Validation, ValidationNel }
 import scalaz.syntax.nel._
 import scalaz.syntax.std.option._
@@ -57,43 +55,6 @@ object ConfigAction extends ConfigActionInstances {
         }
       }
     }
-}
-
-object ConfigReport {
-  def empty: ConfigReport =
-    ConfigReport(Map.empty[String, String])
-}
-
-final case class ConfigReport(readValues: Map[String, String]) {
-  def +(other: (String, String)): ConfigReport =
-    copy(readValues + other)
-
-  def prettyPrint: String =
-    prettyPrintWithMask(_ => false)
-
-  def prettyPrintMaskPasswords: String =
-    prettyPrintWithMask(s => List("secret", "password").exists(s.toLowerCase.contains))
-
-  @SuppressWarnings(Array("org.wartremover.warts.NonUnitStatements"))
-  def prettyPrintWithMask(maskPredicate: String => Boolean): String = {
-    val sb = new StringBuilder
-    sb.append("Config:\n")
-
-    @tailrec def loop(item: List[(String, String)]): Unit =
-      item match {
-        case x :: xs =>
-          val value = if (maskPredicate(x._1)) "******" else x._1
-          sb.append("  - ").append(x._1).append(": ").append(value)
-          if (xs.nonEmpty) sb.append('\n')
-          loop(xs)
-        case Nil =>
-          ()
-      }
-
-    loop(readValues.toList.sortBy(_._1))
-
-    sb.toString()
-  }
 }
 
 trait ConfigActionInstances {

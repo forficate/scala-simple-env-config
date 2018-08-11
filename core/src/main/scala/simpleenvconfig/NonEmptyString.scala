@@ -2,12 +2,17 @@ package simpleenvconfig
 
 import scala.language.experimental.macros
 import scala.reflect.macros.blackbox.Context
-
-import scalaz.{ Equal, Maybe }
+import scalaz.{ Equal, Maybe, Semigroup }
 
 final case class NonEmptyString private (val value: String) {
   def filter(predicate: Char => Boolean): Maybe[NonEmptyString] =
     NonEmptyString(value.filter(predicate))
+
+  def +(other: String): NonEmptyString =
+    copy(value + other)
+
+  def ++(other: NonEmptyString): NonEmptyString =
+    copy(value + other.value)
 }
 
 object NonEmptyString extends NonEmptyStringInstances {
@@ -50,4 +55,10 @@ object NonEmptyString extends NonEmptyStringInstances {
 trait NonEmptyStringInstances {
   implicit val EqualNonEmptyString: Equal[NonEmptyString] =
     Equal.equalA[NonEmptyString]
+
+  implicit val SemigroupNonEmptyString: Semigroup[NonEmptyString] =
+    new Semigroup[NonEmptyString] {
+      override def append(a: NonEmptyString, b: => NonEmptyString): NonEmptyString =
+        a ++ b
+    }
 }
