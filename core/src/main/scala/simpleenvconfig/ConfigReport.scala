@@ -20,14 +20,14 @@ final case class ConfigReport(readValues: Map[String, String]) {
   @SuppressWarnings(Array("org.wartremover.warts.NonUnitStatements"))
   def prettyPrintWithMask(maskPredicate: String => Boolean): String = {
     val sb = new StringBuilder
-    sb.append("Config:\n")
+    sb.append("Config:").append(System.lineSeparator)
 
     @tailrec def loop(item: List[(String, String)]): Unit =
       item match {
         case (key, value) :: xs =>
           sb.append("  - ").append(key).append(": ")
           if (maskPredicate(value)) sb.append("******") else sb.append(value)
-          if (xs.nonEmpty) sb.append('\n')
+          if (xs.nonEmpty) sb.append(System.lineSeparator)
           loop(xs)
         case Nil =>
           ()
